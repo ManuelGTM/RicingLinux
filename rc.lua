@@ -1,6 +1,7 @@
 -- If LuaRocks is installed, make sure that packages installed through it are
 -- found (e.g. lgi). If LuaRocks is not installed, do nothing.
 pcall(require, "luarocks.loader")
+local cairo = require("lgi").cairo
 
 -- Standard awesome library
 local gears = require("gears")
@@ -17,10 +18,6 @@ local hotkeys_popup = require("awful.hotkeys_popup")
 -- Enable hotkeys help widget for VIM and other apps
 -- when client with a matching name is opened:
 require("awful.hotkeys_popup.keys")
-
--- Load Debian menu entries
-local debian = require("debian.menu")
-local has_fdo, freedesktop = pcall(require, "freedesktop")
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
@@ -48,24 +45,12 @@ end
 -- }}}
 
 -- {{{ Variable definitions
--- Themes define colours, icons, font and wallpapers.
+--  define colours, icons, font and wallpapers.
 beautiful.init(awful.util.getdir("config") .. "/Themes/Manuel-theme/theme.lua")
---beautiful.init(gears.filesystem.get_themes_dir() .. "default/theme.lua")
-
---local themes = {
-  --  "Manuel-theme"
---}
-
---choose your theme here
-
---local chosen_theme = themes[1]
-
---local theme_path= string.format("%s/.config/awesome/themes/%s/theme.lua", os.getenv("HOME"), chosen_theme)
---beautiful.init(theme_path)
 
 -- This is used later as the default terminal and editor to run.
 terminal = "alacritty"
-editor = os.getenv("EDITOR") or "editor"
+editor = os.getenv("EDITOR") or "neovim"
 editor_cmd = terminal .. " -e " .. editor
 
 -- Default modkey.
@@ -106,30 +91,16 @@ myawesomemenu = {
    { "quit", function() awesome.quit() end },
 }
 
-local menu_awesome = { "awesome", myawesomemenu, beautiful.awesome_icon }
-local menu_terminal = { "open terminal", terminal }
+--Menu theme configuration
 
-if has_fdo then
-    mymainmenu = freedesktop.menu.build({
-        before = { menu_awesome },
-        after =  { menu_terminal }
-    })
-else
-    mymainmenu = awful.menu({
-        items = {
-                  menu_awesome,
-                  { "Debian", debian.menu.Debian_menu.Debian },
-                  menu_terminal,
-                }
-    })
-end
-
-
+mymainmenu = awful.menu({ items = { { "awesome", myawesomemenu, beautiful.awesome_icon },
+                                    { "open terminal", terminal }
+                                  }
+                        })
 
 mylauncher = awful.widget.launcher({ image = beautiful.awesome_icon,
                                      menu = mymainmenu })
 
- 
 -- Menubar configuration
 menubar.utils.terminal = terminal -- Set the terminal for applications that require it
 -- }}}
@@ -140,6 +111,7 @@ mykeyboardlayout = awful.widget.keyboardlayout()
 -- {{{ Wibar
 -- Create a textclock widget
 mytextclock = wibox.widget.textclock()
+
 
 -- Create a wibox for each screen and add it
 local taglist_buttons = gears.table.join(
@@ -200,10 +172,19 @@ awful.screen.connect_for_each_screen(function(s)
     -- Wallpaper
     set_wallpaper(s)
 
+   
     -- Each screen has its own tag table.
+--	local t = awful.tag.add("    ", {
+--		screen = s,
+--		master_fill_policy = "master_width_factor",
+--		gap = 20,
+--		style = {
+--			shape = gears.shape.powerline}
+-- 	})
+	
+	
 
-    awful.tag({ "DEV", "WWW", "DOC", "VBOX", "CHAT", "MUS", "VID", "GFX"}, s, awful.layout.layouts[1])
-
+    awful.tag({ "    ", "    ", "    ", "    ", "    ", "     ", "    ", "    "}, s, awful.layout.layouts[1])
 
     -- Create a promptbox for each screen
     s.mypromptbox = awful.widget.prompt()
@@ -215,39 +196,44 @@ awful.screen.connect_for_each_screen(function(s)
                            awful.button({ }, 3, function () awful.layout.inc(-1) end),
                            awful.button({ }, 4, function () awful.layout.inc( 1) end),
                            awful.button({ }, 5, function () awful.layout.inc(-1) end)))
-    
-
-
-    --create a new widget
-
-
     -- Create a taglist widget
     s.mytaglist = awful.widget.taglist {
         screen  = s,
         filter  = awful.widget.taglist.filter.all,
-        buttons = taglist_buttons
+        buttons = taglist_buttons,
+           
     }
 
     -- Create a tasklist widget
-    s.mytasklist = awful.widget.tasklist {
-        screen  = s,
-        filter  = awful.widget.tasklist.filter.currenttags,
-        buttons = tasklist_buttons
-    }
+   -- s.mytasklist = awful.widget.tasklist {
+     --   screen  = s,
+       -- filter  = awful.widget.tasklist.filter.currenttags,
+       -- buttons = tasklist_buttons
+    --}
 
-    -- Create the wibox
-    s.mywibox = awful.wibar({ position = "top", screen = s })
+    -- Create the wibox and configurate the colors and shape
+    
 
+    
+    s.mywibox = awful.wibar({ 
+    position = "top", 
+    screen = s,
+    bg = "#bb1d1d",
+    --width = 1000,
+    border_color = "#ffffff",
+    border_width = 0.5,
+    
+    })
+      
+    
 
-    -- Add widgets to the wibox agregar widgets a la barra
+    -- Add widgets to the wibox
     s.mywibox:setup {
         layout = wibox.layout.align.horizontal,
         { -- Left widgets
             layout = wibox.layout.fixed.horizontal,
-            --mylauncher,
             s.mytaglist,
             s.mypromptbox,
-            
         },
         s.mytasklist, -- Middle widget
         { -- Right widgets
@@ -374,18 +360,10 @@ globalkeys = gears.table.join(
                  {description = "Rofi run", group = "system"}),
 
 
-
-    -- Turn off computer(pendiente)
-
-    awful.key({modkey}, "", function()
-      awful.util.spawn("google-chrome") end,
-                 {description = "turn off computer", group = "system"}),
-
-
     --Browser
 
       awful.key({modkey}, "b", function()
-      awful.util.spawn("google-chrome") end,
+      awful.util.spawn("firefox") end,
                  {description = "run Google Chrome", group = "applications"}),
 
 
@@ -450,7 +428,6 @@ clientkeys = gears.table.join(
         end ,
         {description = "(un)maximize horizontally", group = "client"})
 )
-
 -- Bind all key numbers to tags.
 -- Be careful: we use keycodes to make it work on any keyboard layout.
 -- This should map on the top row of your keyboard, usually 1 to 9.
@@ -572,8 +549,8 @@ awful.rules.rules = {
     },
 
     -- Set Firefox to always map on the tag named "2" on screen 1.
-    -- { rule = { class = "google-chrome" },
-    --   properties = { screen = 1, tag = "WWW" } },
+    -- { rule = { class = "Firefox" },
+    --   properties = { screen = 1, tag = "2" } },
 }
 -- }}}
 
@@ -632,6 +609,9 @@ client.connect_signal("request::titlebars", function(c)
     }
 end)
 
+
+
+
 -- Enable sloppy focus, so that focus follows mouse.
 client.connect_signal("mouse::enter", function(c)
     c:emit_signal("request::activate", "mouse_enter", {raise = false})
@@ -641,8 +621,7 @@ client.connect_signal("focus", function(c) c.border_color = beautiful.border_foc
 client.connect_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
 -- }}}
 
-
 --Autostart apps
-awful.spawn.with_shell("compton")
-awful.spawn.with_shell("nitrogen --restore")
+awful.spawn.with_shell("picom --experimental-backend &")
+awful.spawn.with_shell("nitrogen --restore &")
 
